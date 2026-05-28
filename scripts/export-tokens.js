@@ -7,14 +7,143 @@ const tokensDir = path.join(__dirname, '..', 'tokens')
 const outputDir = path.join(__dirname, '..', 'dist', 'tokens')
 
 const tokenLevels = ['global', 'alias', 'component']
-const tokenTypeMap = {
-  color: 'Colors',
-  font: 'Typography',
-  spacing: 'Spacing',
-  radius: 'Border Radius',
-  shadow: 'Shadows',
-  duration: 'Animation',
-  breakpoint: 'Breakpoints'
+
+function parseTokenObjects(content) {
+  const tokens = []
+  let i = 0
+  
+  const skipWhitespace = () => {
+    while (i < content.length && /\s/.test(content[i])) i++
+  }
+  
+  const parseString = () => {
+    const quote = content[i]
+    i++
+    let str = ''
+    while (i < content.length && content[i] !== quote) {
+      if (content[i] === '\\') {
+        str += content[i] + content[i + 1]
+        i += 2
+      } else {
+        str += content[i]
+        i++
+      }
+    }
+    i++
+    return str
+  }
+  
+  const parseValue = () => {
+    skipWhitespace()
+    if (content[i] === "'" || content[i] === '"') {
+      return parseString()
+    }
+    
+    let value = ''
+    let braceDepth = 0
+    let inString = false
+    let stringChar = ''
+    
+    while (i < content.length) {
+      const char = content[i]
+      
+      if (!inString && (char === "'" || char === '"')) {
+        inString = true
+        stringChar = char
+        value += char
+        i++
+        continue
+      }
+      
+      if (inString) {
+        value += char
+        if (char === stringChar && content[i - 1] !== '\\') {
+          inString = false
+        }
+        i++
+        continue
+      }
+      
+      if (char === '{') {
+        braceDepth++
+        value += char
+        i++
+        continue
+      }
+      
+      if (char === '}') {
+        if (braceDepth === 0) break
+        braceDepth--
+        value += char
+        i++
+        continue
+      }
+      
+      if (char === ',' && braceDepth === 0) {
+        break
+      }
+      
+      value += char
+      i++
+    }
+    
+    value = value.trim()
+    if (value === 'true') return true
+    if (value === 'false') return false
+    if (!isNaN(Number(value)) && value !== '') return Number(value)
+    return value
+  }
+  
+  const parseObject = () => {
+    const obj = {}
+    skipWhitespace()
+    if (content[i] !== '{') return null
+    i++
+    
+    while (i < content.length) {
+      skipWhitespace()
+      if (content[i] === '}') {
+        i++
+        break
+      }
+      
+      let key
+      if (content[i] === "'" || content[i] === '"') {
+        key = parseString()
+      } else {
+        key = ''
+        while (i < content.length && /[\w-]/.test(content[i])) {
+          key += content[i]
+          i++
+        }
+      }
+      
+      skipWhitespace()
+      if (content[i] === ':') i++
+      
+      const value = parseValue()
+      obj[key] = value
+      
+      skipWhitespace()
+      if (content[i] === ',') i++
+    }
+    
+    return obj
+  }
+  
+  while (i < content.length) {
+    skipWhitespace()
+    if (content[i] === '{') {
+      const obj = parseObject()
+      if (obj && obj.name && obj.value !== undefined && obj.type && obj.level) {
+        tokens.push(obj)
+      }
+    } else {
+      i++
+    }
+  }
+  
+  return tokens
 }
 
 async function loadTokens() {
@@ -23,52 +152,10 @@ async function loadTokens() {
     const filePath = path.join(tokensDir, `${level}.ts`)
     if (await fs.pathExists(filePath)) {
       const content = await fs.readFile(filePath, 'utf-8')
-      const tokenMatch = content.match(/const \w+: Token\[\] = \[([\s\S]*?)\]/g)
-      if (tokenMatch) {
-        tokens[level] = []
-        for (const block of tokenMatch) {
-          const arrayMatch = block.match(/\[([\s\S]*?)\]$/)
-          if (arrayMatch) {
-            const tokenStr = arrayMatch[1]
-            const tokenRegex = /\{([^}]+)\}/g
-            let match
-            while ((match = tokenRegex.exec(tokenStr)) !== null) {
-              const tokenObj = parseTokenObj(match[1])
-              if (tokenObj) {
-                tokens[level].push(tokenObj)
-              }
-            }
-          }
-        }
-      }
+      tokens[level] = parseTokenObjects(content)
     }
   }
   return tokens
-}
-
-function parseTokenObj(content) {
-  try {
-    const obj = {}
-    const pairs = content.split(',').map(p => p.trim()).filter(Boolean)
-    for (const pair of pairs) {
-      const colonIndex = pair.indexOf(':')
-      if (colonIndex > 0) {
-        const key = pair.slice(0, colonIndex).trim().replace(/^name: ?/, 'name').replace(/^['"]|['"]$/g, '')
-        let value = pair.slice(colonIndex + 1).trim()
-        if (value.startsWith("'") || value.startsWith('"')) {
-          value = value.slice(1, -1)
-        } else if (value === 'true') {
-          value = true
-        } else if (value === 'false') {
-          value = false
-        }
-        obj[key] = value
-      }
-    }
-    return obj.name ? obj : null
-  } catch {
-    return null
-  }
 }
 
 function resolveValue(value, tokens, visited = new Set()) {
@@ -197,6 +284,10 @@ async function exportTailwind(tokens) {
 async function main() {
   await fs.ensureDir(outputDir)
   const tokens = await loadTokens()
+  
+  console.log(`Loaded ${tokens.global?.length || 0} global tokens`)
+  console.log(`Loaded ${tokens.alias?.length || 0} alias tokens`)
+  console.log(`Loaded ${tokens.component?.length || 0} component tokens`)
   
   await Promise.all([
     exportCSS(tokens),

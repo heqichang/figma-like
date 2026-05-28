@@ -1,0 +1,31 @@
+.hello {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.hello--variant-default {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.hello--variant-primary {
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.hello--size-sm {
+  padding: var(--padding-sm);
+  font-size: var(--text-sm);
+}
+
+.hello--size-md {
+  padding: var(--padding-md);
+  font-size: var(--text-base);
+}
+
+.hello--size-lg {
+  padding: var(--padding-lg);
+  font-size: var(--text-lg);
+}
