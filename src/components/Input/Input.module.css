@@ -1,0 +1,109 @@
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+  width: 100%;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  font-family: inherit;
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
+  transition: all var(--duration-150) ease;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--input-text-placeholder);
+}
+
+.input:hover:not(:disabled):not(.input--error) {
+  border-color: var(--input-border-hover);
+}
+
+.input:focus:not(:disabled) {
+  border-color: var(--input-border-focus);
+  box-shadow: var(--input-shadow-focus);
+}
+
+.input--error {
+  border-color: var(--input-border-error);
+}
+
+.input--error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input:disabled {
+  background-color: var(--input-bg-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.input--sm {
+  padding: calc(var(--input-padding-y) * 0.75) var(--input-padding-x);
+  font-size: calc(var(--input-font-size) * 0.875);
+  border-radius: var(--input-radius);
+}
+
+.input--md {
+  padding: var(--input-padding-y) var(--input-padding-x);
+  font-size: var(--input-font-size);
+  border-radius: var(--input-radius);
+}
+
+.input--lg {
+  padding: calc(var(--input-padding-y) * 1.25) var(--input-padding-x);
+  font-size: calc(var(--input-font-size) * 1.125);
+  border-radius: var(--input-radius);
+}
+
+.left-addon {
+  position: absolute;
+  left: var(--spacing-3);
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.right-addon {
+  position: absolute;
+  right: var(--spacing-3);
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.input--with-left-addon {
+  padding-left: calc(var(--spacing-3) * 2 + 1rem);
+}
+
+.input--with-right-addon {
+  padding-right: calc(var(--spacing-3) * 2 + 1rem);
+}
+
+.helper-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.error-text {
+  font-size: var(--text-sm);
+  color: var(--state-error);
+}
