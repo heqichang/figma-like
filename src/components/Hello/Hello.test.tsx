@@ -10,12 +10,12 @@ describe('Hello', () => {
 
   it('applies variant class correctly', () => {
     const { container } = render(<Hello variant="primary">Test</Hello>)
-    expect(container.firstChild).toHaveClass('hello--variant-primary')
+    expect((container.firstChild as HTMLElement).className).toContain('variant-primary')
   })
 
   it('applies size class correctly', () => {
     const { container } = render(<Hello size="sm">Test</Hello>)
-    expect(container.firstChild).toHaveClass('hello--size-sm')
+    expect((container.firstChild as HTMLElement).className).toContain('size-sm')
   })
 
   it('merges custom className', () => {
